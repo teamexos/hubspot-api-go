@@ -58,7 +58,7 @@ type Response struct {
 	StatusCode int
 }
 
-//Creates a new Contact in HubSpot
+// Creates a new Contact in HubSpot
 func (c *Client) CreateContact(body Contact) (*Contact, ErrorResponse) {
 	var contact Contact
 	log.Printf("INFO: attempting to create HubSpot Contact")
@@ -102,7 +102,7 @@ func (c *Client) CreateContact(body Contact) (*Contact, ErrorResponse) {
 	return &contact, ErrorResponse{}
 }
 
-//Executes a HTTP request and returns the response
+// Executes a HTTP request and returns the response
 func (c *Client) request(
 	url string,
 	method string,
