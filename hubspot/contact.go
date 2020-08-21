@@ -1,7 +1,7 @@
 package hubspot
 
 type Contact struct {
-	ID         string            `json:"id"`
+	ID         string            `json:"string"`
 	Properties map[string]string `json:"properties"`
 }
 
