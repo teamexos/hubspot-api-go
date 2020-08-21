@@ -80,7 +80,6 @@ func (c *Client) CreateContact(body Contact) (*Contact, ErrorResponse) {
 	}
 
 	if r.StatusCode != http.StatusCreated {
-		//errorResponse, err := decodeErrorResponse(r)
 		var errorResponse ErrorResponse
 		err := json.Unmarshal(r.Body, &errorResponse)
 		msg := "ERROR: unable to create HubSpot account. "
