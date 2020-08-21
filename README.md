@@ -19,7 +19,8 @@ make test
   - API Key
   
 ### Supported API endpoints
- - Create Contact
+
+  - Create Contact
   
 ## Usage
 
