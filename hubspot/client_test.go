@@ -65,20 +65,20 @@ func TestCreateContact(t *testing.T) {
 	c.HttpClient = NewMockHTTPClient(
 		http.StatusCreated,
 		`{
-		"id": "551",
-		"properties": {
-			"company": "Marvel",
-				"createdate": "2020-08-20T15:47:54.554Z",
-				"email": "pp@gmail.com",
-				"firstname": "Peter",
-				"hs_is_unworked": "true",
-				"lastmodifieddate": "2020-08-20T15:47:54.870Z",
-				"lastname": "Parker"
-		},
-		"createdAt": "2020-08-20T15:47:54.554Z",
-		"updatedAt": "2020-08-20T15:47:54.870Z",
-		"archived": false
-	}`)
+			"id": "551",
+			"properties": {
+				"company": "Marvel",
+					"createdate": "2020-08-20T15:47:54.554Z",
+					"email": "pp@gmail.com",
+					"firstname": "Peter",
+					"hs_is_unworked": "true",
+					"lastmodifieddate": "2020-08-20T15:47:54.870Z",
+					"lastname": "Parker"
+			},
+			"createdAt": "2020-08-20T15:47:54.554Z",
+			"updatedAt": "2020-08-20T15:47:54.870Z",
+			"archived": false
+		}`)
 
 	contact, err := c.CreateContact(*wantContact)
 	if err.StatusCode != 0 {
@@ -109,22 +109,22 @@ func TestCreateContactErrors(t *testing.T) {
 		{
 			name: "contactAlreadyExists",
 			json: `{
-					"status": "error",
-					"message": "Contact already exists",
-					"correlationId": "64c72d80-c369-409f-b2ec-c233d4928080",
-					"category": "CONFLICT"
-				}`,
+				"status": "error",
+				"message": "Contact already exists",
+				"correlationId": "64c72d80-c369-409f-b2ec-c233d4928080",
+				"category": "CONFLICT"
+			}`,
 			wantStatusCode:    http.StatusUnauthorized,
 			wantErrorCategory: "CONFLICT",
 		},
 		{
 			name: "badRequest",
 			json: `{
-					"status": "error",
-					"message": "Property values were not valid",
-					"correlationId": "cfa4f261-2877-4f61-8a75-e411c5163134",
-					"category": "VALIDATION_ERROR"
-					}`,
+				"status": "error",
+				"message": "Property values were not valid",
+				"correlationId": "cfa4f261-2877-4f61-8a75-e411c5163134",
+				"category": "VALIDATION_ERROR"
+			}`,
 			wantStatusCode:    http.StatusUnauthorized,
 			wantErrorCategory: "VALIDATION_ERROR",
 		},
