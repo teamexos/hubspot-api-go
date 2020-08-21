@@ -12,4 +12,4 @@ clean:
 	rm -rf ./bin ./vendor Gopkg.lock
 
 test:
-	${TEST_CMD} github.com/teamexos/hubspot-api-go/hubspot
+	${TEST_CMD} ${BASE_DIR}/hubspot
