@@ -15,7 +15,8 @@ make test
 ```
 
 ### Supported API authentication
- - API Key
+
+  - API Key
   
 ### Supported API endpoints
  - Create Contact
@@ -46,4 +47,3 @@ func main(){
     }
 }
 ```
-
