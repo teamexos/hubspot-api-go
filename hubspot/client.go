@@ -111,7 +111,7 @@ func (c *Client) CreateContact(body Contact) (*Contact, ErrorResponse) {
 	}
 
 	if err := json.Unmarshal(r.Body, &contact); err != nil {
-		msg := fmt.Sprintf("could not unmarshall HubSpot response, err: %v", err)
+		msg := fmt.Sprintf("could not unmarshal HubSpot response, err: %v", err)
 		log.Printf("ERROR: %s", msg)
 		return &contact, ErrorResponse{Status: "error", Message: msg}
 	}
