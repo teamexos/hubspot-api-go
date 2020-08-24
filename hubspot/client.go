@@ -116,7 +116,7 @@ func (c *Client) CreateContact(body Contact) (*Contact, ErrorResponse) {
 		return &contact, ErrorResponse{Status: "error", Message: msg}
 	}
 
-	log.Printf("INFO: hubspot contact created successfully. Contact ID: %s", contact.ID)
+	log.Printf("INFO: HubSpot contact created successfully. Contact ID: %s", contact.ID)
 	return &contact, ErrorResponse{}
 }
 
