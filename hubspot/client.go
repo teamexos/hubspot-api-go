@@ -2,11 +2,14 @@ package hubspot
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
+	"time"
 )
 
 // HubSpot defaults
@@ -28,16 +31,6 @@ type Client struct {
 	HttpClient HTTPClient
 }
 
-// Creates a new HubSpot Client with corresponding defaults
-func NewClient(apiKey string) *Client {
-	c := &Client{}
-	c.APIKey = apiKey
-	c.APIBaseUrl = DefaultAPIBaseURL
-	c.APIVersion = DefaultAPIVersion
-	c.HttpClient = &http.Client{}
-	return c
-}
-
 // Error struct returned by HubSpot API
 type ErrorResponse struct {
 	Category      string
@@ -48,17 +41,42 @@ type ErrorResponse struct {
 	StatusCode    int
 }
 
-func (e ErrorResponse) Error() string {
-	return fmt.Sprintf(e.Message)
-}
-
 // Response returned by the request method
 type Response struct {
 	Body       json.RawMessage
 	StatusCode int
 }
 
-// Creates a new Contact in HubSpot
+// NewClient creates a new HubSpot Client with corresponding defaults
+func NewClient(apiKey string) *Client {
+	c := &Client{}
+	c.APIKey = apiKey
+	c.APIBaseUrl = DefaultAPIBaseURL
+	c.APIVersion = DefaultAPIVersion
+
+	// Instantiate gzip client with a 5 second timeout on waiting for the
+	// remote server to accept the connection and a 30 second timeout
+	// for no activity over the connection
+	transport := &http.Transport{
+		DialContext: (&net.Dialer{
+			Timeout: 5 * time.Second,
+		}).DialContext,
+		MaxIdleConns:       2,
+		IdleConnTimeout:    30 * time.Second,
+		DisableCompression: false,
+	}
+
+	c.HttpClient = &http.Client{
+		Transport: transport,
+	}
+	return c
+}
+
+func (e ErrorResponse) Error() string {
+	return fmt.Sprintf(e.Message)
+}
+
+// CreateContact creates a new Contact in HubSpot
 func (c *Client) CreateContact(body Contact) (*Contact, ErrorResponse) {
 	var contact Contact
 	log.Printf("INFO: attempting to create HubSpot Contact")
@@ -102,17 +120,26 @@ func (c *Client) CreateContact(body Contact) (*Contact, ErrorResponse) {
 	return &contact, ErrorResponse{}
 }
 
-// Executes a HTTP request and returns the response
+// request executes a HTTP request and returns the response
 func (c *Client) request(
 	url string,
 	method string,
 	requestBody []byte) (*Response, error) {
-	req, err := http.NewRequest(method, url, bytes.NewBuffer(requestBody))
 
 	var response Response
+
+	// Timeout the entire request after 30 seconds if the server accepts the connection
+	// but never responds
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewBuffer(requestBody))
 	if err != nil {
-		return &response, err
+		log.Printf("ERROR: unable to create a HubSpot request, got error = %v", err)
+		return &response, errors.New("request execution failed")
 	}
+
 	req.Header.Add("Content-Type", "application/json")
 	r, err := c.HttpClient.Do(req)
 	if err != nil {
