@@ -23,25 +23,25 @@ type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-// HubSpot Client structure
+// Client allows you to create a new HubSpot client
 type Client struct {
-	APIBaseUrl string
+	APIBaseURL string
 	APIKey     string
 	APIVersion string
-	HttpClient HTTPClient
+	HTTPClient HTTPClient
 }
 
-// Error struct returned by HubSpot API
+// ErrorResponse handles the error structure returned by HubSpot API
 type ErrorResponse struct {
 	Category      string
-	CorrelationId string
+	CorrelationID string
 	Links         map[string]string
 	Message       string
 	Status        string
 	StatusCode    int
 }
 
-// Response returned by the request method
+// Response handles a response by the request method
 type Response struct {
 	Body       json.RawMessage
 	StatusCode int
@@ -51,7 +51,7 @@ type Response struct {
 func NewClient(apiKey string) *Client {
 	c := &Client{}
 	c.APIKey = apiKey
-	c.APIBaseUrl = DefaultAPIBaseURL
+	c.APIBaseURL = DefaultAPIBaseURL
 	c.APIVersion = DefaultAPIVersion
 
 	// Instantiate gzip client with a 5 second timeout on waiting for the
@@ -66,7 +66,7 @@ func NewClient(apiKey string) *Client {
 		DisableCompression: false,
 	}
 
-	c.HttpClient = &http.Client{
+	c.HTTPClient = &http.Client{
 		Transport: transport,
 	}
 	return c
@@ -87,7 +87,7 @@ func (c *Client) CreateContact(body Contact) (*Contact, ErrorResponse) {
 		return &contact, ErrorResponse{Status: "error", Message: "invalid contact body"}
 	}
 	r, err := c.request(
-		fmt.Sprintf("%s/crm/%s/objects/contacts/?hapikey=%s", c.APIBaseUrl, c.APIVersion, c.APIKey),
+		fmt.Sprintf("%s/crm/%s/objects/contacts/?hapikey=%s", c.APIBaseURL, c.APIVersion, c.APIKey),
 		http.MethodPost,
 		requestBody)
 
@@ -141,7 +141,7 @@ func (c *Client) request(
 	}
 
 	req.Header.Add("Content-Type", "application/json")
-	r, err := c.HttpClient.Do(req)
+	r, err := c.HTTPClient.Do(req)
 	if err != nil {
 		log.Printf("ERROR: unable to complete request, got error = %v", err)
 		return &response, errors.New("request execution failed")

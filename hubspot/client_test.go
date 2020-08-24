@@ -32,7 +32,7 @@ func (m *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 
 func TestUnauthorized(t *testing.T) {
 	c := hubSpot.NewClient("invalid-api-key!")
-	c.HttpClient = NewMockHTTPClient(
+	c.HTTPClient = NewMockHTTPClient(
 		http.StatusUnauthorized,
 		`{
 		"status": "error",
@@ -62,7 +62,7 @@ func TestCreateContact(t *testing.T) {
 		"pp@marvel.com",
 		"Marvel")
 
-	c.HttpClient = NewMockHTTPClient(
+	c.HTTPClient = NewMockHTTPClient(
 		http.StatusCreated,
 		`{
 			"id": "551",
@@ -131,7 +131,7 @@ func TestCreateContactErrors(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		c.HttpClient = NewMockHTTPClient(
+		c.HTTPClient = NewMockHTTPClient(
 			tt.wantStatusCode,
 			tt.json,
 		)
