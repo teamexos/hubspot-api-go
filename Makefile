@@ -4,8 +4,6 @@ TEST_CMD= go test -timeout 30s
 .PHONY: build clean deploy
 
 
-clean:
-	rm -rf ./bin ./vendor Gopkg.lock
 
 test:
 	${TEST_CMD} ${BASE_DIR}/hubspot
