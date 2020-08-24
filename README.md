@@ -10,7 +10,6 @@ v3 SDK(Client)
 ### Build and Test
 
 ```sh
-make build
 make test
 ```
 
