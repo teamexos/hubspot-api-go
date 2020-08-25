@@ -58,7 +58,7 @@ func TestCreateContact(t *testing.T) {
 	properties := map[string]string{
 		"firstname":  "Peter",
 		"lastname":   "Parker",
-		"email":      "pp444@gmail.com",
+		"email":      "pp@gmail.com",
 		"work_email": "pp@marvel.com",
 		"company":    "Marvel",
 	}
