@@ -147,6 +147,8 @@ func (c *Client) request(
 		return &response, errors.New("request execution failed")
 	}
 
+	defer r.Body.Close()
+
 	log.Printf("INFO: request successful, got response status: %v", r.StatusCode)
 
 	// prepare response
@@ -155,8 +157,6 @@ func (c *Client) request(
 		log.Printf("ERROR: could not decode HubSpot response, err: %v", err)
 		return &response, errors.New("ERROR: could not decode response")
 	}
-
-	defer r.Body.Close()
 
 	return &response, nil
 }
