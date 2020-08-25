@@ -1,7 +1,7 @@
 BASE_DIR= github.com/teamexos/hubspot-api-go
 TEST_CMD= go test -timeout 30s
 
-.PHONY: build clean deploy
+.PHONY: test
 
 
 
