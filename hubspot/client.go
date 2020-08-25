@@ -84,7 +84,7 @@ func (c *Client) CreateContact(body Contact) (*Contact, ErrorResponse) {
 	requestBody, err := json.Marshal(body)
 	if err != nil {
 		log.Printf("ERROR: could not marshal the provided contact body, err: %v", err)
-		return &contact, ErrorResponse{Status: "error", Message: "invalid contact body"}
+		return nil, ErrorResponse{Status: "error", Message: "invalid contact body"}
 	}
 	r, err := c.request(
 		fmt.Sprintf("%s/crm/%s/objects/contacts/?hapikey=%s", c.APIBaseURL, c.APIVersion, c.APIKey),
@@ -93,7 +93,7 @@ func (c *Client) CreateContact(body Contact) (*Contact, ErrorResponse) {
 
 	if err != nil {
 		log.Printf("ERROR: unable to create hubspot contact")
-		return &contact,
+		return nil,
 			ErrorResponse{Status: "error", Message: fmt.Sprintf("unable to execute request, err: %v", err)}
 	}
 
@@ -107,13 +107,13 @@ func (c *Client) CreateContact(body Contact) (*Contact, ErrorResponse) {
 			log.Printf("%sGot error: %v.", msg, errorResponse.Message)
 		}
 		errorResponse.StatusCode = r.StatusCode
-		return &contact, errorResponse
+		return nil, errorResponse
 	}
 
 	if err := json.Unmarshal(r.Body, &contact); err != nil {
 		msg := fmt.Sprintf("could not unmarshal HubSpot response, err: %v", err)
 		log.Printf("ERROR: %s", msg)
-		return &contact, ErrorResponse{Status: "error", Message: msg}
+		return nil, ErrorResponse{Status: "error", Message: msg}
 	}
 
 	log.Printf("INFO: HubSpot contact created successfully. Contact ID: %s", contact.ID)
@@ -137,7 +137,7 @@ func (c *Client) request(
 	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewBuffer(requestBody))
 	if err != nil {
 		log.Printf("ERROR: unable to create a HubSpot request, got error = %v", err)
-		return &response, errors.New("request execution failed")
+		return nil, errors.New("request execution failed")
 	}
 
 	req.Header.Add("Content-Type", "application/json")
