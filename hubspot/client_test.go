@@ -94,7 +94,7 @@ func TestCreateContact(t *testing.T) {
 func TestCreateContactErrors(t *testing.T) {
 	c := hubSpot.NewClient("this-Is-A-Secret-!")
 
-	properties := map[string]string{ // Map literal
+	properties := map[string]string{
 		"first_name": "Peter",
 		"last_name":  "Parker",
 		"email":      "pp@gmail.com",
