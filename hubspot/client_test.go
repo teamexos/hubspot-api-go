@@ -55,11 +55,11 @@ func TestUnauthorized(t *testing.T) {
 func TestCreateContact(t *testing.T) {
 	c := hubSpot.NewClient("this-Is-A-Secret-!")
 
-	properties := map[string]string{ // Map literal
-		"first_name": "Peter",
-		"last_name":  "Parker",
-		"email":      "pp@gmail.com",
-		"email_work": "pp@marvel.com",
+	properties := map[string]string{
+		"firstname":  "Peter",
+		"lastname":   "Parker",
+		"email":      "pp444@gmail.com",
+		"work_email": "pp@marvel.com",
 		"company":    "Marvel",
 	}
 
@@ -92,13 +92,14 @@ func TestCreateContact(t *testing.T) {
 }
 
 func TestCreateContactErrors(t *testing.T) {
-	c := hubSpot.NewClient("this-Is-A-Secret-!")
+	//c := hubSpot.NewClient("this-Is-A-Secret-!")
+	c := hubSpot.NewClient("11a17991-a99a-4cf3-93f1-c7ed2345f941")
 
 	properties := map[string]string{
-		"first_name": "Peter",
-		"last_name":  "Parker",
+		"firstname":  "Peter",
+		"lastname":   "Parker",
 		"email":      "pp@gmail.com",
-		"email_work": "pp@marvel.com",
+		"work_email": "pp@marvel.com",
 		"company":    "Marvel",
 	}
 	wantContact := hubSpot.NewContactInput(properties)
@@ -117,7 +118,7 @@ func TestCreateContactErrors(t *testing.T) {
 				"correlationId": "64c72d80-c369-409f-b2ec-c233d4928080",
 				"category": "CONFLICT"
 			}`,
-			wantStatusCode:    http.StatusUnauthorized,
+			wantStatusCode:    http.StatusConflict,
 			wantErrorCategory: "CONFLICT",
 		},
 		{
@@ -128,7 +129,7 @@ func TestCreateContactErrors(t *testing.T) {
 				"correlationId": "cfa4f261-2877-4f61-8a75-e411c5163134",
 				"category": "VALIDATION_ERROR"
 			}`,
-			wantStatusCode:    http.StatusUnauthorized,
+			wantStatusCode:    http.StatusBadRequest,
 			wantErrorCategory: "VALIDATION_ERROR",
 		},
 	}
