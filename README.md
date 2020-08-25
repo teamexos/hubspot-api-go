@@ -1,12 +1,11 @@
 # hubspot-api-go
 
-v3 SDK(Client) 
+v3 SDK(Client)
 
 ### Requirements
 
 - Golang (1.14+)
-  - `dep` (0.5.4)
-  
+
 ### Build and Test
 
 ```sh
@@ -16,11 +15,11 @@ make test
 ### Supported API authentication
 
   - API Key
-  
+
 ### Supported API endpoints
 
   - Create Contact
-  
+
 ## Usage
 
 ```go
@@ -40,7 +39,7 @@ func main(){
         "pp@gmail.com",
         "pp@marvel.com",
         "Marvel")
-    
+
     contact, err := client.CreateContact(newContact)
     if err.Status != "" {
         fmt.Printf("Contact ID: %s", contact.ID)
