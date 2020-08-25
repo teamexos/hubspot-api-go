@@ -1,6 +1,6 @@
 package hubspot
 
-// ContactInput handles a contact body representation from HubSpot contact creation
+// ContactInput handles a contact body representation from HubSpot
 type ContactInput struct {
 	Properties map[string]string `json:"properties"`
 }
