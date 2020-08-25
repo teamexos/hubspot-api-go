@@ -77,14 +77,13 @@ func (e ErrorResponse) Error() string {
 }
 
 // CreateContact creates a new Contact in HubSpot
-func (c *Client) CreateContact(body Contact) (*Contact, ErrorResponse) {
-	var contact Contact
+func (c *Client) CreateContact(contactInput *ContactInput) (*ContactOutput, ErrorResponse) {
 	log.Printf("INFO: attempting to create HubSpot Contact")
 
-	requestBody, err := json.Marshal(body)
+	requestBody, err := json.Marshal(contactInput)
 	if err != nil {
 		log.Printf("ERROR: could not marshal the provided contact body, err: %v", err)
-		return nil, ErrorResponse{Status: "error", Message: "invalid contact body"}
+		return nil, ErrorResponse{Status: "error", Message: "invalid contact input"}
 	}
 	r, err := c.request(
 		fmt.Sprintf("%s/crm/%s/objects/contacts/?hapikey=%s", c.APIBaseURL, c.APIVersion, c.APIKey),
@@ -110,14 +109,15 @@ func (c *Client) CreateContact(body Contact) (*Contact, ErrorResponse) {
 		return nil, errorResponse
 	}
 
-	if err := json.Unmarshal(r.Body, &contact); err != nil {
+	var contactOutput ContactOutput
+	if err := json.Unmarshal(r.Body, &contactOutput); err != nil {
 		msg := fmt.Sprintf("could not unmarshal HubSpot response, err: %v", err)
 		log.Printf("ERROR: %s", msg)
 		return nil, ErrorResponse{Status: "error", Message: msg}
 	}
 
-	log.Printf("INFO: HubSpot contact created successfully. Contact ID: %s", contact.ID)
-	return &contact, ErrorResponse{}
+	log.Printf("INFO: HubSpot contact created successfully. Contact ID: %s", contactOutput.ID)
+	return &contactOutput, ErrorResponse{}
 }
 
 // request executes a HTTP request and returns the response

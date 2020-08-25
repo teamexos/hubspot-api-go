@@ -43,7 +43,7 @@ func TestUnauthorized(t *testing.T) {
 			"api key": "https://app.hubspot.com/l/api-key/"
 		}
 	}`)
-	_, err := c.CreateContact(hubSpot.Contact{})
+	_, err := c.CreateContact(hubSpot.NewContactInput(map[string]string{}))
 	if err.Status != "error" {
 		t.Errorf("expected unauthorized error, got: %s", err)
 	}
@@ -55,12 +55,13 @@ func TestUnauthorized(t *testing.T) {
 func TestCreateContact(t *testing.T) {
 	c := hubSpot.NewClient("this-Is-A-Secret-!")
 
-	wantContact := hubSpot.NewContact(
-		"Peter",
-		"Parker",
-		"pp@gmail.com",
-		"pp@marvel.com",
-		"Marvel")
+	properties := map[string]string{ // Map literal
+		"first_name": "Peter",
+		"last_name":  "Parker",
+		"email":      "pp@gmail.com",
+		"email_work": "pp@marvel.com",
+		"company":    "Marvel",
+	}
 
 	c.HTTPClient = NewMockHTTPClient(
 		http.StatusCreated,
@@ -80,7 +81,7 @@ func TestCreateContact(t *testing.T) {
 			"archived": false
 		}`)
 
-	contact, err := c.CreateContact(*wantContact)
+	contact, err := c.CreateContact(hubSpot.NewContactInput(properties))
 	if err.StatusCode != 0 {
 		t.Errorf("expected empty error response, got error with status code: %d", err.StatusCode)
 	}
@@ -93,12 +94,14 @@ func TestCreateContact(t *testing.T) {
 func TestCreateContactErrors(t *testing.T) {
 	c := hubSpot.NewClient("this-Is-A-Secret-!")
 
-	wantContact := hubSpot.NewContact(
-		"Peter",
-		"Parker",
-		"pp@gmail.com",
-		"pp@marvel.com",
-		"Marvel")
+	properties := map[string]string{ // Map literal
+		"first_name": "Peter",
+		"last_name":  "Parker",
+		"email":      "pp@gmail.com",
+		"email_work": "pp@marvel.com",
+		"company":    "Marvel",
+	}
+	wantContact := hubSpot.NewContactInput(properties)
 
 	tests := []struct {
 		name              string
@@ -135,7 +138,7 @@ func TestCreateContactErrors(t *testing.T) {
 			tt.wantStatusCode,
 			tt.json,
 		)
-		_, err := c.CreateContact(*wantContact)
+		_, err := c.CreateContact(wantContact)
 		if err.StatusCode != tt.wantStatusCode {
 			t.Errorf("expected error code: %d, got : %d", tt.wantStatusCode, err.StatusCode)
 		}
