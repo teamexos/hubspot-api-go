@@ -148,3 +148,58 @@ func TestCreateContactErrors(t *testing.T) {
 		}
 	}
 }
+
+func TestUpdateContactErrors(t *testing.T) {
+	c := hubSpot.NewClient("11a17991-a99a-4cf3-93f1-c7ed2345f941")
+
+	properties := map[string]string{
+		"exos_perform_account_verified": "true",
+		"company":                       "Marvel",
+	}
+	wantContact := hubSpot.NewContactInput(properties)
+
+	tests := []struct {
+		name              string
+		json              string
+		wantStatusCode    int
+		wantErrorCategory string
+	}{
+		{
+			name: "contactAlreadyExists",
+			json: `{
+				"status": "error",
+				"message": "Contact already exists",
+				"correlationId": "64c72d80-c369-409f-b2ec-c233d4928080",
+				"category": "CONFLICT"
+			}`,
+			wantStatusCode:    http.StatusConflict,
+			wantErrorCategory: "CONFLICT",
+		},
+		{
+			name: "badRequest",
+			json: `{
+				"status": "error",
+				"message": "Property values were not valid",
+				"correlationId": "cfa4f261-2877-4f61-8a75-e411c5163134",
+				"category": "VALIDATION_ERROR"
+			}`,
+			wantStatusCode:    http.StatusBadRequest,
+			wantErrorCategory: "VALIDATION_ERROR",
+		},
+	}
+
+	for _, tt := range tests {
+		c.HTTPClient = NewMockHTTPClient(
+			tt.wantStatusCode,
+			tt.json,
+		)
+		contactId := "someContactId"
+		_, err := c.UpdateContact(contactId, wantContact)
+		if err.StatusCode != tt.wantStatusCode {
+			t.Errorf("expected error code: %d, got : %d", tt.wantStatusCode, err.StatusCode)
+		}
+		if err.Category != tt.wantErrorCategory {
+			t.Errorf("expected error category: %s, got : %s", tt.wantErrorCategory, err.Category)
+		}
+	}
+}
