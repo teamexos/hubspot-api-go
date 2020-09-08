@@ -149,8 +149,45 @@ func TestCreateContactErrors(t *testing.T) {
 	}
 }
 
+func TestUpdateContact(t *testing.T) {
+	c := hubSpot.NewClient("this-Is-A-Secret-!")
+
+	properties := map[string]string{
+		"exos_perform_account_verified": "true",
+		"company":                       "Marvel",
+	}
+
+	c.HTTPClient = NewMockHTTPClient(
+		http.StatusOK,
+		`{
+			"id": "551",
+			"properties": {
+				"company": "Marvel",
+					"createdate": "2020-08-20T15:47:54.554Z",
+					"email": "pp@gmail.com",
+					"firstname": "Peter",
+					"hs_is_unworked": "true",
+					"lastmodifieddate": "2020-08-20T15:47:54.870Z",
+					"exos_perform_account_verified": "true",
+					"lastname": "Parker"
+			},
+			"createdAt": "2020-08-20T15:47:54.554Z",
+			"updatedAt": "2020-08-20T15:47:54.870Z",
+			"archived": false
+		}`)
+
+	contact, err := c.UpdateContact("ContactID", hubSpot.NewContactInput(properties))
+	if err.StatusCode != 0 {
+		t.Errorf("expected empty error response, got error with status code: %d", err.StatusCode)
+	}
+
+	if contact.ID == "" {
+		t.Errorf("expected a contact ID different than empty")
+	}
+}
+
 func TestUpdateContactErrors(t *testing.T) {
-	c := hubSpot.NewClient("11a17991-a99a-4cf3-93f1-c7ed2345f941")
+	c := hubSpot.NewClient("this-Is-A-Secret-!")
 
 	properties := map[string]string{
 		"exos_perform_account_verified": "true",
