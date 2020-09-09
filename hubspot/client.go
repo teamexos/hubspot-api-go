@@ -91,7 +91,7 @@ func (c *Client) CreateContact(contactInput *ContactInput) (*ContactOutput, Erro
 		requestBody)
 
 	if err != nil {
-		log.Printf("ERROR: unable to create hubSpot contact")
+		log.Printf("ERROR: unable to create HubSpot contact")
 		return nil,
 			ErrorResponse{Status: "error", Message: fmt.Sprintf("unable to execute request, err: %v", err)}
 	}
@@ -124,7 +124,6 @@ func (c *Client) CreateContact(contactInput *ContactInput) (*ContactOutput, Erro
 func (c *Client) UpdateContact(contactID string, contactInput *ContactInput) (*ContactOutput, ErrorResponse) {
 	log.Printf("INFO: attempting to update HubSpot Contact")
 
-	//contactInput.Properties.
 	requestBody, err := json.Marshal(contactInput)
 	if err != nil {
 		log.Printf("ERROR: could not marshal the provided contact body, err: %v", err)
@@ -136,7 +135,7 @@ func (c *Client) UpdateContact(contactID string, contactInput *ContactInput) (*C
 		requestBody)
 
 	if err != nil {
-		log.Printf("ERROR: unable to update hubSpot contact")
+		log.Printf("ERROR: unable to update HubSpot contact")
 		return nil,
 			ErrorResponse{Status: "error", Message: fmt.Sprintf("unable to execute request, err: %v", err)}
 	}
@@ -144,11 +143,11 @@ func (c *Client) UpdateContact(contactID string, contactInput *ContactInput) (*C
 	if r.StatusCode != http.StatusOK {
 		var errorResponse ErrorResponse
 		err := json.Unmarshal(r.Body, &errorResponse)
-		msg := "ERROR: unable to update HubSpot account. "
+		msg := "ERROR: unable to update HubSpot account:"
 		if err != nil {
-			log.Printf("%sUnable to unmarshall error response.", msg)
+			log.Printf("%s unable to unmarshal error response.", msg)
 		} else {
-			log.Printf("%sGot error: %v.", msg, errorResponse.Message)
+			log.Printf("%s got error: %v.", msg, errorResponse.Message)
 		}
 		errorResponse.StatusCode = r.StatusCode
 		return nil, errorResponse
