@@ -129,10 +129,9 @@ func (c *Client) UpdateContact(contactID string, contactInput *ContactInput) (*C
 		log.Printf("ERROR: could not marshal the provided contact body, err: %v", err)
 		return nil, ErrorResponse{Status: "error", Message: "invalid contact input"}
 	}
-	r, err := c.request(
-		fmt.Sprintf("%s/crm/%s/objects/contacts/%s?hapikey=%s", c.APIBaseURL, c.APIVersion, contactID, c.APIKey),
-		http.MethodPatch,
-		requestBody)
+	
+	apiURL := fmt.Sprintf("%s/crm/%s/objects/contacts/%s?hapikey=%s", c.APIBaseURL, c.APIVersion, contactID, c.APIKey)
+	r, err := c.request(apiURL, http.MethodPatch, requestBody)
 
 	if err != nil {
 		log.Printf("ERROR: unable to update HubSpot contact")
