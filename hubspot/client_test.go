@@ -202,17 +202,6 @@ func TestUpdateContactErrors(t *testing.T) {
 		wantErrorCategory string
 	}{
 		{
-			name: "contactAlreadyExists",
-			json: `{
-				"status": "error",
-				"message": "Contact already exists",
-				"correlationId": "64c72d80-c369-409f-b2ec-c233d4928080",
-				"category": "CONFLICT"
-			}`,
-			wantStatusCode:    http.StatusConflict,
-			wantErrorCategory: "CONFLICT",
-		},
-		{
 			name: "badRequest",
 			json: `{
 				"status": "error",
