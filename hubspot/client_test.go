@@ -148,3 +148,84 @@ func TestCreateContactErrors(t *testing.T) {
 		}
 	}
 }
+
+func TestUpdateContact(t *testing.T) {
+	c := hubSpot.NewClient("this-Is-A-Secret-!")
+
+	properties := map[string]string{
+		"exos_perform_account_verified": "true",
+		"company":                       "Marvel",
+	}
+
+	c.HTTPClient = NewMockHTTPClient(
+		http.StatusOK,
+		`{
+			"id": "551",
+			"properties": {
+				"company": "Marvel",
+					"createdate": "2020-08-20T15:47:54.554Z",
+					"email": "pp@gmail.com",
+					"firstname": "Peter",
+					"hs_is_unworked": "true",
+					"lastmodifieddate": "2020-08-20T15:47:54.870Z",
+					"exos_perform_account_verified": "true",
+					"lastname": "Parker"
+			},
+			"createdAt": "2020-08-20T15:47:54.554Z",
+			"updatedAt": "2020-08-20T15:47:54.870Z",
+			"archived": false
+		}`)
+
+	contact, err := c.UpdateContact("ContactID", hubSpot.NewContactInput(properties))
+	if err.StatusCode != 0 {
+		t.Errorf("expected empty error response, got error with status code: %d", err.StatusCode)
+	}
+
+	if contact.ID == "" {
+		t.Errorf("expected a contact ID different than empty")
+	}
+}
+
+func TestUpdateContactErrors(t *testing.T) {
+	c := hubSpot.NewClient("this-Is-A-Secret-!")
+
+	properties := map[string]string{
+		"exos_perform_account_verified": "true",
+		"company":                       "Marvel",
+	}
+	wantContact := hubSpot.NewContactInput(properties)
+
+	tests := []struct {
+		name              string
+		json              string
+		wantStatusCode    int
+		wantErrorCategory string
+	}{
+		{
+			name: "badRequest",
+			json: `{
+				"status": "error",
+				"message": "Property values were not valid",
+				"correlationId": "cfa4f261-2877-4f61-8a75-e411c5163134",
+				"category": "VALIDATION_ERROR"
+			}`,
+			wantStatusCode:    http.StatusBadRequest,
+			wantErrorCategory: "VALIDATION_ERROR",
+		},
+	}
+
+	for _, tt := range tests {
+		c.HTTPClient = NewMockHTTPClient(
+			tt.wantStatusCode,
+			tt.json,
+		)
+		contactId := "someContactId"
+		_, err := c.UpdateContact(contactId, wantContact)
+		if err.StatusCode != tt.wantStatusCode {
+			t.Errorf("expected error code: %d, got : %d", tt.wantStatusCode, err.StatusCode)
+		}
+		if err.Category != tt.wantErrorCategory {
+			t.Errorf("expected error category: %s, got : %s", tt.wantErrorCategory, err.Category)
+		}
+	}
+}

@@ -91,7 +91,7 @@ func (c *Client) CreateContact(contactInput *ContactInput) (*ContactOutput, Erro
 		requestBody)
 
 	if err != nil {
-		log.Printf("ERROR: unable to create hubspot contact")
+		log.Printf("ERROR: unable to create HubSpot contact")
 		return nil,
 			ErrorResponse{Status: "error", Message: fmt.Sprintf("unable to execute request, err: %v", err)}
 	}
@@ -117,6 +117,49 @@ func (c *Client) CreateContact(contactInput *ContactInput) (*ContactOutput, Erro
 	}
 
 	log.Printf("INFO: HubSpot contact created successfully. Contact ID: %s", contactOutput.ID)
+	return &contactOutput, ErrorResponse{}
+}
+
+// UpdateContact updates a Contact in HubSpot
+func (c *Client) UpdateContact(contactID string, contactInput *ContactInput) (*ContactOutput, ErrorResponse) {
+	log.Printf("INFO: attempting to update HubSpot Contact")
+
+	requestBody, err := json.Marshal(contactInput)
+	if err != nil {
+		log.Printf("ERROR: could not marshal the provided contact body, err: %v", err)
+		return nil, ErrorResponse{Status: "error", Message: "invalid contact input"}
+	}
+	
+	apiURL := fmt.Sprintf("%s/crm/%s/objects/contacts/%s?hapikey=%s", c.APIBaseURL, c.APIVersion, contactID, c.APIKey)
+	r, err := c.request(apiURL, http.MethodPatch, requestBody)
+
+	if err != nil {
+		log.Printf("ERROR: unable to update HubSpot contact")
+		return nil,
+			ErrorResponse{Status: "error", Message: fmt.Sprintf("unable to execute request, err: %v", err)}
+	}
+
+	if r.StatusCode != http.StatusOK {
+		var errorResponse ErrorResponse
+		err := json.Unmarshal(r.Body, &errorResponse)
+		msg := "ERROR: unable to update HubSpot account:"
+		if err != nil {
+			log.Printf("%s unable to unmarshal error response.", msg)
+		} else {
+			log.Printf("%s got error: %v.", msg, errorResponse.Message)
+		}
+		errorResponse.StatusCode = r.StatusCode
+		return nil, errorResponse
+	}
+
+	var contactOutput ContactOutput
+	if err := json.Unmarshal(r.Body, &contactOutput); err != nil {
+		msg := fmt.Sprintf("could not unmarshal HubSpot response, err: %v", err)
+		log.Printf("ERROR: %s", msg)
+		return nil, ErrorResponse{Status: "error", Message: msg}
+	}
+
+	log.Printf("INFO: HubSpot contact updated successfully. Contact ID: %s", contactOutput.ID)
 	return &contactOutput, ErrorResponse{}
 }
 
