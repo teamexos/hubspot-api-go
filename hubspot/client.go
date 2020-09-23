@@ -23,6 +23,12 @@ type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+// HubSpot Interface
+type HubSpotClient interface {
+	CreateContact(contactInput *ContactInput) (*ContactOutput, ErrorResponse)
+	UpdateContact(contactID string, contactInput *ContactInput) (*ContactOutput, ErrorResponse)
+}
+
 // Client allows you to create a new HubSpot client
 type Client struct {
 	APIBaseURL string
@@ -129,7 +135,7 @@ func (c *Client) UpdateContact(contactID string, contactInput *ContactInput) (*C
 		log.Printf("ERROR: could not marshal the provided contact body, err: %v", err)
 		return nil, ErrorResponse{Status: "error", Message: "invalid contact input"}
 	}
-	
+
 	apiURL := fmt.Sprintf("%s/crm/%s/objects/contacts/%s?hapikey=%s", c.APIBaseURL, c.APIVersion, contactID, c.APIKey)
 	r, err := c.request(apiURL, http.MethodPatch, requestBody)
 
