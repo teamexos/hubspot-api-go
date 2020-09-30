@@ -23,12 +23,6 @@ type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-// HubSpot Interface
-type HubSpotClient interface {
-	CreateContact(contactInput *ContactInput) (*ContactOutput, ErrorResponse)
-	UpdateContact(contactID string, contactInput *ContactInput) (*ContactOutput, ErrorResponse)
-}
-
 // Client allows you to create a new HubSpot client
 type Client struct {
 	APIBaseURL string
