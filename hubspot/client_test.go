@@ -69,12 +69,12 @@ func TestCreateContact(t *testing.T) {
 			"id": "551",
 			"properties": {
 				"company": "Marvel",
-					"createdate": "2020-08-20T15:47:54.554Z",
-					"email": "pp@gmail.com",
-					"firstname": "Peter",
-					"hs_is_unworked": "true",
-					"lastmodifieddate": "2020-08-20T15:47:54.870Z",
-					"lastname": "Parker"
+				"createdate": "2020-08-20T15:47:54.554Z",
+				"email": "pp@gmail.com",
+				"firstname": "Peter",
+				"hs_is_unworked": "true",
+				"lastmodifieddate": "2020-08-20T15:47:54.870Z",
+				"lastname": "Parker"
 			},
 			"createdAt": "2020-08-20T15:47:54.554Z",
 			"updatedAt": "2020-08-20T15:47:54.870Z",
@@ -163,13 +163,13 @@ func TestUpdateContact(t *testing.T) {
 			"id": "551",
 			"properties": {
 				"company": "Marvel",
-					"createdate": "2020-08-20T15:47:54.554Z",
-					"email": "pp@gmail.com",
-					"firstname": "Peter",
-					"hs_is_unworked": "true",
-					"lastmodifieddate": "2020-08-20T15:47:54.870Z",
-					"exos_perform_account_verified": "true",
-					"lastname": "Parker"
+				"createdate": "2020-08-20T15:47:54.554Z",
+				"email": "pp@gmail.com",
+				"firstname": "Peter",
+				"hs_is_unworked": "true",
+				"lastmodifieddate": "2020-08-20T15:47:54.870Z",
+				"exos_perform_account_verified": "true",
+				"lastname": "Parker"
 			},
 			"createdAt": "2020-08-20T15:47:54.554Z",
 			"updatedAt": "2020-08-20T15:47:54.870Z",
@@ -226,6 +226,161 @@ func TestUpdateContactErrors(t *testing.T) {
 		}
 		if err.Category != tt.wantErrorCategory {
 			t.Errorf("expected error category: %s, got : %s", tt.wantErrorCategory, err.Category)
+		}
+	}
+}
+
+func TestCreateAssociation(t *testing.T) {
+	c := hubSpot.NewClient("this-Is-A-Secret-!")
+
+	c.HTTPClient = NewMockHTTPClient(
+		http.StatusCreated,
+		`{
+			"status": "COMPLETE",
+			"results": [
+				{
+					"from": {
+						"id": "4705054985"
+					},
+					"to": {
+						"id": "3051"
+					},
+					"type": "company_to_contact"
+				},
+				{
+					"from": {
+						"id": "3051"
+					},
+					"to": {
+						"id": "4705054985"
+					},
+					"type": "contact_to_company"
+				}
+			],
+			"startedAt": "2020-10-29T12:32:11.425Z",
+			"completedAt": "2020-10-29T12:32:11.451Z"
+		}`)
+
+	contactID := "3051"
+	companyID := "4705054985"
+	wantAssociation := hubSpot.NewSingleContactToCompanyAssociationInput(contactID, companyID)
+	association, err := c.CreateAssociation(wantAssociation, "contact", "company")
+	if err.StatusCode != 0 {
+		t.Errorf("expected empty error response, got error with status code: %d", err.StatusCode)
+	}
+
+	if len(association.Results) == 0 {
+		t.Errorf("expected an array of assocations")
+	}
+
+	if association.Results[1].From.ID != contactID {
+		t.Errorf("expected return contact id to match with sent value")
+	}
+}
+
+func TestCreateAssociationErrors(t *testing.T) {
+	c := hubSpot.NewClient("this-Is-A-Secret-!")
+
+	contactID := "3051"
+	companyID := "4705054985"
+	wantAssociation := hubSpot.NewSingleContactToCompanyAssociationInput(contactID, companyID)
+
+	tests := []struct {
+		name              string
+		json              string
+		wantStatusCode    int
+		wantErrorCategory string
+		wantNumErrors     int
+	}{
+		{
+			name: "invalidContact",
+			json: `{
+				"status": "COMPLETE",
+				"results": [],
+				"numErrors": 1,
+				"errors": [
+					{
+						"status": "error",
+						"category": "OBJECT_NOT_FOUND",
+						"subCategory": "crm.associations.FROM_OBJECT_NOT_FOUND",
+						"message": "No contact with ID 9993051 exists",
+						"context": {
+							"objectType": [
+								"contact"
+							],
+							"id": [
+								"9993051"
+							]
+						}
+					}
+				],
+				"startedAt": "2020-10-29T12:43:31.395Z",
+				"completedAt": "2020-10-29T12:43:31.404Z"
+			}`,
+			wantStatusCode:    http.StatusMultiStatus,
+			wantErrorCategory: "OBJECT_NOT_FOUND",
+			wantNumErrors:     1,
+		},
+		{
+			name: "invalidContactAndCompany",
+			json: `{
+				"status": "COMPLETE",
+				"results": [],
+				"numErrors": 2,
+				"errors": [
+					{
+						"status": "error",
+						"category": "OBJECT_NOT_FOUND",
+						"subCategory": "crm.associations.FROM_OBJECT_NOT_FOUND",
+						"message": "No contact with ID 9993051 exists",
+						"context": {
+							"objectType": [
+								"contact"
+							],
+							"id": [
+								"9993051"
+							]
+						}
+					},
+					{
+						"status": "error",
+						"category": "OBJECT_NOT_FOUND",
+						"subCategory": "crm.associations.TO_OBJECT_NOT_FOUND",
+						"message": "No company with ID 994705054985 exists",
+						"context": {
+							"objectType": [
+								"company"
+							],
+							"id": [
+								"994705054985"
+							]
+						}
+					}
+				],
+				"startedAt": "2020-10-29T12:58:30.125Z",
+				"completedAt": "2020-10-29T12:58:30.133Z"
+			}`,
+			wantStatusCode:    http.StatusMultiStatus,
+			wantErrorCategory: "OBJECT_NOT_FOUND",
+			wantNumErrors:     2,
+		},
+	}
+
+	for _, tt := range tests {
+		c.HTTPClient = NewMockHTTPClient(
+			tt.wantStatusCode,
+			tt.json,
+		)
+		_, err := c.CreateAssociation(wantAssociation, "contact", "company")
+		if err.StatusCode != tt.wantStatusCode {
+			t.Errorf("expected error code: %d, got : %d", tt.wantStatusCode, err.StatusCode)
+		}
+		if err.Errors[0].Category != tt.wantErrorCategory {
+			t.Errorf("expected error category: %s, got : %s", tt.wantErrorCategory, err.Errors[0].Category)
+		}
+
+		if len(err.Errors) != tt.wantNumErrors {
+			t.Errorf("expected %d errors, but received %d", tt.wantNumErrors, len(err.Errors))
 		}
 	}
 }

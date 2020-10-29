@@ -23,6 +23,15 @@ type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+// AssociationErrorResponse handles the HubSpot error when associating two objects
+type AssociationErrorResponse struct {
+	Status     string
+	StatusCode int
+	Message    string
+	NumErrors  int
+	Errors     []ErrorResponse
+}
+
 // Client allows you to create a new HubSpot client
 type Client struct {
 	APIBaseURL string
@@ -74,6 +83,58 @@ func NewClient(apiKey string) *Client {
 
 func (e ErrorResponse) Error() string {
 	return fmt.Sprintf(e.Message)
+}
+
+//CreateAssocation relates two objects to each other in HubSpot
+func (c *Client) CreateAssociation(association *AssociationInput, fromObject string, toObject string) (*AssociationResults, AssociationErrorResponse) {
+	log.Printf("INFO: attempting to create HubSpot object association")
+
+	requestBody, err := json.Marshal(association)
+	if err != nil {
+		log.Printf("ERROR: could not marshal the provided object association body, err: %v", err)
+		return nil, AssociationErrorResponse{Status: "error", Message: "invalid association input"}
+	}
+
+	r, err := c.request(
+		fmt.Sprintf("%s/crm/%s/associations/%s/%s/batch/create?hapikey=%s", c.APIBaseURL, c.APIVersion, fromObject, toObject, c.APIKey),
+		http.MethodPost,
+		requestBody)
+
+	if err != nil {
+		log.Printf("ERROR: unable to create HubSpot association")
+		return nil,
+			AssociationErrorResponse{Status: "error", Message: fmt.Sprintf("unable to execute request, err: %v", err)}
+	}
+
+	if r.StatusCode != http.StatusCreated {
+		var errorResponse AssociationErrorResponse
+		err := json.Unmarshal(r.Body, &errorResponse)
+		msg := "ERROR: unable to associate HubSpot objects. "
+		if err != nil {
+			log.Printf("%sUnable to unmarshall error response.", msg)
+		} else {
+			log.Printf("%sGot %d error(s):", msg, errorResponse.NumErrors)
+			// HubSpot returns an error for each potential problem with the association (ie, both ids are wrong results in two errors)
+			for i, itemError := range errorResponse.Errors {
+				log.Printf("error %d: %s", i+1, itemError.Message)
+			}
+		}
+		errorResponse.StatusCode = r.StatusCode
+		return nil, errorResponse
+	}
+
+	var associationResult AssociationResults
+	if err := json.Unmarshal(r.Body, &associationResult); err != nil {
+		msg := fmt.Sprintf("could not unmarshal HubSpot response, err: %v", err)
+		log.Printf("ERROR: %s", msg)
+		return nil, AssociationErrorResponse{Status: "error", Message: msg}
+	}
+
+	log.Printf("INFO: HubSpot contact assocation created successfully. Contact ID: %s; Company ID %s",
+		association.Inputs[0].From.ID,
+		association.Inputs[0].To.ID)
+
+	return &associationResult, AssociationErrorResponse{}
 }
 
 // CreateContact creates a new Contact in HubSpot
