@@ -24,8 +24,8 @@ type (
 	// AssociationResults handles the results from a successful call to the HubSpot Association API
 	AssociationResults struct {
 		Status      string        `json:"string"`
-		StartedAt   string        `json:"started_at"`
-		CompletedAt string        `json:"created_at"`
+		StartedAt   string        `json:"startedAt"`
+		CompletedAt string        `json:"completedAt"`
 		Results     []Association `json:"results"`
 	}
 )

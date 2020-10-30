@@ -90,7 +90,7 @@ func BuildAssociationURL(c *Client, from string, to string) (string, error) {
 	from = strings.TrimSpace(from)
 	to = strings.TrimSpace(to)
 	if len(from) == 0 || len(to) == 0 {
-		return "", fmt.Errorf("from and to arguments require a value")
+		return "", fmt.Errorf("BuildAssociationURL(): from and to arguments require a value")
 	}
 	return fmt.Sprintf("%s/crm/%s/associations/%s/%s/batch/create?hapikey=%s", c.APIBaseURL, c.APIVersion, from, to, c.APIKey), nil
 }
@@ -125,7 +125,7 @@ func (c *Client) CreateAssociation(association *AssociationInput, from string, t
 
 		if err != nil {
 			errorResponse.Status = "error"
-			errorResponse.Message = fmt.Sprintf("Unable to unmarshal HubSpot association error response, err: %v", err)
+			errorResponse.Message = fmt.Sprintf("unable to unmarshal HubSpot association error response, err: %v", err)
 		}
 		return nil, errorResponse
 	}
@@ -162,7 +162,7 @@ func (c *Client) CreateContact(contactInput *ContactInput) (*ContactOutput, Erro
 
 		if err != nil {
 			errorResponse.Status = "error"
-			errorResponse.Message = fmt.Sprintf("Unable to unmarshal HubSpot create account error response, err: %v", err)
+			errorResponse.Message = fmt.Sprintf("unable to unmarshal HubSpot create account error response, err: %v", err)
 		}
 		return nil, errorResponse
 	}
