@@ -1,40 +1,41 @@
 package hubspot
 
-const AssocationContactToCompany = "contact_to_company"
+// AssociationContactToCompany is the value for the "AssociationType" when associating contact and companies
+const AssociationContactToCompany = "contact_to_company"
 
 type (
-	//AssociationInput handles an association from one type of object to another
+	// AssociationInput handles an association from one type of object to another
 	AssociationInput struct {
-		Inputs []AssociationObject `json:"inputs"`
+		Inputs []Association `json:"inputs"`
 	}
 
-	//AssocationObject is the two objects to be associated
-	AssociationObject struct {
+	// Association handles the two items to be associated
+	Association struct {
 		AssociationType string        `json:"type"`
 		From            AssociationID `json:"from"`
 		To              AssociationID `json:"to"`
 	}
 
-	//AssocationID is the objects's ID to be assocaiated
+	// AssociationID handles the IDs to be associated
 	AssociationID struct {
 		ID string `json:"id"`
 	}
 
-	//AssociationResults are the results from a succesful call to the HubSpot Association API
+	// AssociationResults handles the results from a successful call to the HubSpot Association API
 	AssociationResults struct {
-		Status      string              `json:"string"`
-		StartedAt   string              `json:"started_at"`
-		CompletedAt string              `json:"created_at"`
-		Results     []AssociationObject `json:"results"`
+		Status      string        `json:"string"`
+		StartedAt   string        `json:"started_at"`
+		CompletedAt string        `json:"created_at"`
+		Results     []Association `json:"results"`
 	}
 )
 
-//NewSingleContactToCompanyAssocaiationInput can be used to connect a company to a contact
+// NewSingleContactToCompanyAssociationInput can be used to connect a company to a contact
 func NewSingleContactToCompanyAssociationInput(contactID string, companyID string) *AssociationInput {
 	return &AssociationInput{
-		Inputs: []AssociationObject{
-			AssociationObject{
-				AssociationType: AssocationContactToCompany,
+		Inputs: []Association{
+			Association{
+				AssociationType: AssociationContactToCompany,
 				From: AssociationID{
 					ID: contactID,
 				},

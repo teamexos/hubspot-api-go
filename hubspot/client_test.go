@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	hubSpot "github.com/teamexos/hubspot-api-go/hubspot"
 )
 
@@ -35,7 +36,7 @@ func TestUnauthorized(t *testing.T) {
 	c.HTTPClient = NewMockHTTPClient(
 		http.StatusUnauthorized,
 		`{
-		"status": "error",
+			"status": "error",
 			"message": "The API key provided is invalid.",
 			"correlationId": "2af0c5ea-1cb7-438e-8e60-37e8ea6879d5",
 			"category": "INVALID_AUTHENTICATION",
@@ -43,13 +44,11 @@ func TestUnauthorized(t *testing.T) {
 			"api key": "https://app.hubspot.com/l/api-key/"
 		}
 	}`)
+
 	_, err := c.CreateContact(hubSpot.NewContactInput(map[string]string{}))
-	if err.Status != "error" {
-		t.Errorf("expected unauthorized error, got: %s", err)
-	}
-	if err.StatusCode != http.StatusUnauthorized {
-		t.Errorf("expected 401 unauthorized status error, got: %d", err.StatusCode)
-	}
+
+	assert.Equal(t, "error", err.Status, "expected unauthorized error")
+	assert.Equal(t, http.StatusUnauthorized, err.StatusCode, "expected 401 unauthorized error")
 }
 
 func TestCreateContact(t *testing.T) {
@@ -82,13 +81,8 @@ func TestCreateContact(t *testing.T) {
 		}`)
 
 	contact, err := c.CreateContact(hubSpot.NewContactInput(properties))
-	if err.StatusCode != 0 {
-		t.Errorf("expected empty error response, got error with status code: %d", err.StatusCode)
-	}
-
-	if contact.ID == "" {
-		t.Errorf("expected a contact ID different than empty")
-	}
+	assert.Equal(t, 0, err.StatusCode, "expected empty error response")
+	assert.NotEqual(t, "", contact.ID, "expected contact id to have a value")
 }
 
 func TestCreateContactErrors(t *testing.T) {
@@ -140,12 +134,8 @@ func TestCreateContactErrors(t *testing.T) {
 			tt.json,
 		)
 		_, err := c.CreateContact(wantContact)
-		if err.StatusCode != tt.wantStatusCode {
-			t.Errorf("expected error code: %d, got : %d", tt.wantStatusCode, err.StatusCode)
-		}
-		if err.Category != tt.wantErrorCategory {
-			t.Errorf("expected error category: %s, got : %s", tt.wantErrorCategory, err.Category)
-		}
+		assert.Equal(t, tt.wantStatusCode, err.StatusCode, "expected status codes to match")
+		assert.Equal(t, tt.wantErrorCategory, err.Category, "expected proper error category")
 	}
 }
 
@@ -177,13 +167,8 @@ func TestUpdateContact(t *testing.T) {
 		}`)
 
 	contact, err := c.UpdateContact("ContactID", hubSpot.NewContactInput(properties))
-	if err.StatusCode != 0 {
-		t.Errorf("expected empty error response, got error with status code: %d", err.StatusCode)
-	}
-
-	if contact.ID == "" {
-		t.Errorf("expected a contact ID different than empty")
-	}
+	assert.Equal(t, 0, err.StatusCode, "expected empty error status code")
+	assert.NotEqual(t, "", contact.ID, "expected a value for contact id")
 }
 
 func TestUpdateContactErrors(t *testing.T) {
@@ -221,12 +206,8 @@ func TestUpdateContactErrors(t *testing.T) {
 		)
 		contactId := "someContactId"
 		_, err := c.UpdateContact(contactId, wantContact)
-		if err.StatusCode != tt.wantStatusCode {
-			t.Errorf("expected error code: %d, got : %d", tt.wantStatusCode, err.StatusCode)
-		}
-		if err.Category != tt.wantErrorCategory {
-			t.Errorf("expected error category: %s, got : %s", tt.wantErrorCategory, err.Category)
-		}
+		assert.Equal(t, tt.wantStatusCode, err.StatusCode, "expected matching error codes")
+		assert.Equal(t, tt.wantErrorCategory, err.Category, "expected matching error categories")
 	}
 }
 
@@ -265,17 +246,10 @@ func TestCreateAssociation(t *testing.T) {
 	companyID := "4705054985"
 	wantAssociation := hubSpot.NewSingleContactToCompanyAssociationInput(contactID, companyID)
 	association, err := c.CreateAssociation(wantAssociation, "contact", "company")
-	if err.StatusCode != 0 {
-		t.Errorf("expected empty error response, got error with status code: %d", err.StatusCode)
-	}
 
-	if len(association.Results) == 0 {
-		t.Errorf("expected an array of assocations")
-	}
-
-	if association.Results[1].From.ID != contactID {
-		t.Errorf("expected return contact id to match with sent value")
-	}
+	assert.Equal(t, 0, err.StatusCode, "expected empty error response, got error with status code")
+	assert.Greater(t, len(association.Results), 0, "expected an array of associations")
+	assert.Equal(t, contactID, association.Results[1].From.ID, "expected return contact id to match with sent value")
 }
 
 func TestCreateAssociationErrors(t *testing.T) {
@@ -372,15 +346,55 @@ func TestCreateAssociationErrors(t *testing.T) {
 			tt.json,
 		)
 		_, err := c.CreateAssociation(wantAssociation, "contact", "company")
-		if err.StatusCode != tt.wantStatusCode {
-			t.Errorf("expected error code: %d, got : %d", tt.wantStatusCode, err.StatusCode)
-		}
-		if err.Errors[0].Category != tt.wantErrorCategory {
-			t.Errorf("expected error category: %s, got : %s", tt.wantErrorCategory, err.Errors[0].Category)
-		}
 
-		if len(err.Errors) != tt.wantNumErrors {
-			t.Errorf("expected %d errors, but received %d", tt.wantNumErrors, len(err.Errors))
-		}
+		assert.Equal(t, tt.wantStatusCode, err.StatusCode, "expected error codes to match")
+		assert.Equal(t, tt.wantErrorCategory, err.Errors[0].Category, "expected error codes to match")
+		assert.Len(t, err.Errors, tt.wantNumErrors, "expected number of errors")
 	}
+}
+
+func TestAssociationURL(t *testing.T) {
+	c := hubSpot.NewClient("invalid-api-key")
+
+	errorMessage := "from and to arguments require a value"
+	tests := []struct {
+		name             string
+		to               string
+		from             string
+		expectedURL      string
+		expectedErrorMsg string
+	}{
+		{
+			name:             "two valid strings",
+			to:               "company ",
+			from:             " contact",
+			expectedURL:      "https://api.hubapi.com/crm/v3/associations/contact/company/batch/create?hapikey=invalid-api-key",
+			expectedErrorMsg: "",
+		}, {
+			name:             "two invalid strings",
+			to:               "",
+			from:             " ",
+			expectedURL:      "",
+			expectedErrorMsg: errorMessage,
+		}, {
+			name:             "one invalid string",
+			to:               "",
+			from:             "behold",
+			expectedURL:      "",
+			expectedErrorMsg: errorMessage,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resultURL, err := hubSpot.BuildAssociationURL(c, tt.from, tt.to)
+
+			assert.Equal(t, tt.expectedURL, resultURL, "expected the proper URL for making hubspot associations")
+
+			if err != nil {
+				assert.EqualError(t, err, tt.expectedErrorMsg, "expecting errors if to or from are blank")
+			}
+		})
+	}
+
 }
