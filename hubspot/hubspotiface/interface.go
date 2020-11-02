@@ -6,6 +6,7 @@ import (
 
 // HubSpotClient is an interface for the Hubspot Client
 type HubSpotClient interface {
+	CreateAssociation(association *hubspot.AssociationInput, from string, to string) (*hubspot.AssociationResults, hubspot.AssociationErrorResponse)
 	CreateContact(contactInput *hubspot.ContactInput) (*hubspot.ContactOutput, hubspot.ErrorResponse)
 	UpdateContact(contactID string, contactInput *hubspot.ContactInput) (*hubspot.ContactOutput, hubspot.ErrorResponse)
 }

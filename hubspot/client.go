@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -21,6 +21,15 @@ const (
 // HTTPClient interface
 type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
+}
+
+// AssociationErrorResponse handles the HubSpot error when associating two objects
+type AssociationErrorResponse struct {
+	Status     string
+	StatusCode int
+	Message    string
+	NumErrors  int
+	Errors     []ErrorResponse
 }
 
 // Client allows you to create a new HubSpot client
@@ -76,13 +85,64 @@ func (e ErrorResponse) Error() string {
 	return fmt.Sprintf(e.Message)
 }
 
+// BuildAssociationURL returns the URL for HubSpot object to object associations
+func BuildAssociationURL(c *Client, from string, to string) (string, error) {
+	from = strings.TrimSpace(from)
+	to = strings.TrimSpace(to)
+	if len(from) == 0 || len(to) == 0 {
+		return "", fmt.Errorf("BuildAssociationURL(): from and to arguments require a value")
+	}
+	return fmt.Sprintf("%s/crm/%s/associations/%s/%s/batch/create?hapikey=%s", c.APIBaseURL, c.APIVersion, from, to, c.APIKey), nil
+}
+
+// CreateAssociation relates two objects to each other in HubSpot
+func (c *Client) CreateAssociation(association *AssociationInput, from string, to string) (*AssociationResults, AssociationErrorResponse) {
+
+	requestBody, err := json.Marshal(association)
+	if err != nil {
+		return nil, AssociationErrorResponse{Status: "error", Message: "invalid association input"}
+	}
+
+	requestURL, err := BuildAssociationURL(c, from, to)
+	if err != nil {
+		return nil, AssociationErrorResponse{Status: "error", Message: fmt.Sprintf("unable to build url, err: %v", err)}
+	}
+
+	r, err := c.request(
+		requestURL,
+		http.MethodPost,
+		requestBody)
+
+	if err != nil {
+		return nil,
+			AssociationErrorResponse{Status: "error", Message: fmt.Sprintf("unable to execute request, err: %v", err)}
+	}
+
+	if r.StatusCode != http.StatusCreated {
+		var errorResponse AssociationErrorResponse
+		err := json.Unmarshal(r.Body, &errorResponse)
+		errorResponse.StatusCode = r.StatusCode
+
+		if err != nil {
+			errorResponse.Status = "error"
+			errorResponse.Message = fmt.Sprintf("unable to unmarshal HubSpot association error response, err: %v", err)
+		}
+		return nil, errorResponse
+	}
+
+	var associationResult AssociationResults
+	if err := json.Unmarshal(r.Body, &associationResult); err != nil {
+		msg := fmt.Sprintf("could not unmarshal HubSpot response, err: %v", err)
+		return nil, AssociationErrorResponse{Status: "error", Message: msg}
+	}
+
+	return &associationResult, AssociationErrorResponse{}
+}
+
 // CreateContact creates a new Contact in HubSpot
 func (c *Client) CreateContact(contactInput *ContactInput) (*ContactOutput, ErrorResponse) {
-	log.Printf("INFO: attempting to create HubSpot Contact")
-
 	requestBody, err := json.Marshal(contactInput)
 	if err != nil {
-		log.Printf("ERROR: could not marshal the provided contact body, err: %v", err)
 		return nil, ErrorResponse{Status: "error", Message: "invalid contact input"}
 	}
 	r, err := c.request(
@@ -91,7 +151,6 @@ func (c *Client) CreateContact(contactInput *ContactInput) (*ContactOutput, Erro
 		requestBody)
 
 	if err != nil {
-		log.Printf("ERROR: unable to create HubSpot contact")
 		return nil,
 			ErrorResponse{Status: "error", Message: fmt.Sprintf("unable to execute request, err: %v", err)}
 	}
@@ -99,34 +158,28 @@ func (c *Client) CreateContact(contactInput *ContactInput) (*ContactOutput, Erro
 	if r.StatusCode != http.StatusCreated {
 		var errorResponse ErrorResponse
 		err := json.Unmarshal(r.Body, &errorResponse)
-		msg := "ERROR: unable to create HubSpot account. "
-		if err != nil {
-			log.Printf("%sUnable to unmarshall error response.", msg)
-		} else {
-			log.Printf("%sGot error: %v.", msg, errorResponse.Message)
-		}
 		errorResponse.StatusCode = r.StatusCode
+
+		if err != nil {
+			errorResponse.Status = "error"
+			errorResponse.Message = fmt.Sprintf("unable to unmarshal HubSpot create account error response, err: %v", err)
+		}
 		return nil, errorResponse
 	}
 
 	var contactOutput ContactOutput
 	if err := json.Unmarshal(r.Body, &contactOutput); err != nil {
 		msg := fmt.Sprintf("could not unmarshal HubSpot response, err: %v", err)
-		log.Printf("ERROR: %s", msg)
 		return nil, ErrorResponse{Status: "error", Message: msg}
 	}
 
-	log.Printf("INFO: HubSpot contact created successfully. Contact ID: %s", contactOutput.ID)
 	return &contactOutput, ErrorResponse{}
 }
 
 // UpdateContact updates a Contact in HubSpot
 func (c *Client) UpdateContact(contactID string, contactInput *ContactInput) (*ContactOutput, ErrorResponse) {
-	log.Printf("INFO: attempting to update HubSpot Contact")
-
 	requestBody, err := json.Marshal(contactInput)
 	if err != nil {
-		log.Printf("ERROR: could not marshal the provided contact body, err: %v", err)
 		return nil, ErrorResponse{Status: "error", Message: "invalid contact input"}
 	}
 
@@ -134,7 +187,6 @@ func (c *Client) UpdateContact(contactID string, contactInput *ContactInput) (*C
 	r, err := c.request(apiURL, http.MethodPatch, requestBody)
 
 	if err != nil {
-		log.Printf("ERROR: unable to update HubSpot contact")
 		return nil,
 			ErrorResponse{Status: "error", Message: fmt.Sprintf("unable to execute request, err: %v", err)}
 	}
@@ -142,24 +194,21 @@ func (c *Client) UpdateContact(contactID string, contactInput *ContactInput) (*C
 	if r.StatusCode != http.StatusOK {
 		var errorResponse ErrorResponse
 		err := json.Unmarshal(r.Body, &errorResponse)
-		msg := "ERROR: unable to update HubSpot account:"
-		if err != nil {
-			log.Printf("%s unable to unmarshal error response.", msg)
-		} else {
-			log.Printf("%s got error: %v.", msg, errorResponse.Message)
-		}
 		errorResponse.StatusCode = r.StatusCode
+		if err != nil {
+			errorResponse.Status = "error"
+			errorResponse.Message = fmt.Sprintf("unable to unmarshal HubSpot update account error response, err: %v", err)
+		}
+
 		return nil, errorResponse
 	}
 
 	var contactOutput ContactOutput
 	if err := json.Unmarshal(r.Body, &contactOutput); err != nil {
 		msg := fmt.Sprintf("could not unmarshal HubSpot response, err: %v", err)
-		log.Printf("ERROR: %s", msg)
 		return nil, ErrorResponse{Status: "error", Message: msg}
 	}
 
-	log.Printf("INFO: HubSpot contact updated successfully. Contact ID: %s", contactOutput.ID)
 	return &contactOutput, ErrorResponse{}
 }
 
@@ -179,25 +228,20 @@ func (c *Client) request(
 
 	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewBuffer(requestBody))
 	if err != nil {
-		log.Printf("ERROR: unable to create a HubSpot request, got error = %v", err)
 		return nil, errors.New("request execution failed")
 	}
 
 	req.Header.Add("Content-Type", "application/json")
 	r, err := c.HTTPClient.Do(req)
 	if err != nil {
-		log.Printf("ERROR: unable to complete request, got error = %v", err)
 		return &response, errors.New("request execution failed")
 	}
 
 	defer r.Body.Close()
 
-	log.Printf("INFO: request successful, got response status: %v", r.StatusCode)
-
 	// prepare response
 	response.StatusCode = r.StatusCode
 	if err := json.NewDecoder(r.Body).Decode(&response.Body); err != nil {
-		log.Printf("ERROR: could not decode HubSpot response, err: %v", err)
 		return &response, errors.New("ERROR: could not decode response")
 	}
 
