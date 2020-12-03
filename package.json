@@ -1,0 +1,13 @@
+{
+  "name": "hubspot-api-go",
+  "description": "HubSpot v3 Golang SDK",
+  "repository": "https://github.com/teamexos/hubspot-api-go",
+  "license": "public",
+  "version": "0.1.0",
+  "devDependencies": {
+    "husky": "^5.0.0"
+  },
+  "scripts": {
+    "postinstall": "husky install"
+  }
+}
