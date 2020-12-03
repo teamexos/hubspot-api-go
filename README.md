@@ -5,6 +5,14 @@ v3 SDK(Client)
 ### Requirements
 
 - Golang (1.14+)
+- Node/npm (v15+/7+)
+- Python3 w/ pip
+
+### Getting started
+
+```sh
+make init
+```
 
 ### Build and Test
 
