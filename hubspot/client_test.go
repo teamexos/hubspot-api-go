@@ -2,12 +2,14 @@ package hubspot_test
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	hubSpot "github.com/teamexos/hubspot-api-go/hubspot"
+	"syreclabs.com/go/faker"
 )
 
 type MockHTTPClient struct {
@@ -356,7 +358,7 @@ func TestCreateAssociationErrors(t *testing.T) {
 func TestAssociationURL(t *testing.T) {
 	c := hubSpot.NewClient("invalid-api-key")
 
-	errorMessage := "from and to arguments require a value"
+	errorMessage := "BuildAssociationURL(): from and to arguments require a value"
 	tests := []struct {
 		name             string
 		to               string
@@ -394,6 +396,69 @@ func TestAssociationURL(t *testing.T) {
 			if err != nil {
 				assert.EqualError(t, err, tt.expectedErrorMsg, "expecting errors if to or from are blank")
 			}
+		})
+	}
+
+}
+func TestReadContact(t *testing.T) {
+	c := hubSpot.NewClient("99dd2540-40e4-4a59-a6cb-410924075261")
+
+	fakeEmail := faker.Internet().Email()
+
+	tests := []struct {
+		name             string
+		json             string
+		properties       string
+		wantEmail        string
+		wantID           string
+		wantStatusCode   int
+		expectedErrorMsg string
+	}{
+		{
+			name: "found email address",
+			json: fmt.Sprintf(`{
+				"id": "3100",
+				"properties": {
+					"createdate": "2020-10-14T18:01:05.763Z",
+					"email": "%s",
+					"firstname": "Matt",
+					"hs_object_id": "3100",
+					"lastmodifieddate": "2020-10-14T18:03:10.772Z"
+				},
+				"createdAt": "2020-10-14T18:01:05.763Z",
+				"updatedAt": "2020-10-14T18:03:10.772Z",
+				"archived": false
+			}`, fakeEmail),
+			wantID:           "3100",
+			wantEmail:        fakeEmail,
+			properties:       "firstname,email",
+			wantStatusCode:   http.StatusOK,
+			expectedErrorMsg: "",
+		},
+		{
+			name:             "email address not found",
+			json:             "",
+			wantEmail:        "mpurdon@teamexos.com",
+			wantStatusCode:   http.StatusNotFound,
+			properties:       "firstname,email",
+			expectedErrorMsg: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			c.HTTPClient = NewMockHTTPClient(tt.wantStatusCode, tt.json)
+
+			contactOutput, hserr := c.ReadContact(tt.wantEmail, tt.properties)
+
+			if hserr.Status != "" {
+				assert.Equal(t, http.StatusNotFound, hserr.StatusCode)
+			} else {
+				assert.Equal(t, tt.wantID, contactOutput.ID, "ensure the proper hubspot user ID")
+				assert.Equal(t, tt.wantEmail, contactOutput.Properties["email"], "ensure the correct email address")
+			}
+
 		})
 	}
 

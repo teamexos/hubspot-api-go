@@ -212,6 +212,44 @@ func (c *Client) UpdateContact(contactID string, contactInput *ContactInput) (*C
 	return &contactOutput, ErrorResponse{}
 }
 
+// ReadContact gets a Contact in HubSpot
+// email is the address of the user being searched for
+// properties is a comma separated string (no spaces!) of the properties (firstname,email,..) to be returned in the response
+func (c *Client) ReadContact(email string, properties string) (*ContactOutput, ErrorResponse) {
+
+	apiURL := fmt.Sprintf("%s/crm/%s/objects/contacts/%s?hapikey=%s&idProperty=email", c.APIBaseURL, c.APIVersion, email, c.APIKey)
+	r, err := c.request(apiURL, http.MethodGet, nil)
+
+	if err != nil {
+		return nil,
+			ErrorResponse{
+				StatusCode: r.StatusCode,
+				Status:     "error",
+				Message:    fmt.Sprintf("unable to execute request, err: %v", err),
+			}
+	}
+
+	if r.StatusCode != http.StatusOK {
+		var errorResponse ErrorResponse
+		err := json.Unmarshal(r.Body, &errorResponse)
+		errorResponse.StatusCode = r.StatusCode
+		if err != nil {
+			errorResponse.Status = "error"
+			errorResponse.Message = fmt.Sprintf("unable to unmarshal HubSpot read account error response, err: %v", err)
+		}
+
+		return nil, errorResponse
+	}
+
+	var contactOutput ContactOutput
+	if err := json.Unmarshal(r.Body, &contactOutput); err != nil {
+		msg := fmt.Sprintf("could not unmarshal HubSpot response, err: %v", err)
+		return nil, ErrorResponse{Status: "error", Message: msg}
+	}
+
+	return &contactOutput, ErrorResponse{}
+}
+
 // request executes a HTTP request and returns the response
 func (c *Client) request(
 	url string,
