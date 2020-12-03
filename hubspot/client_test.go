@@ -401,7 +401,7 @@ func TestAssociationURL(t *testing.T) {
 
 }
 func TestReadContact(t *testing.T) {
-	c := hubSpot.NewClient("99dd2540-40e4-4a59-a6cb-410924075261")
+	c := hubSpot.NewClient("fake-api-key")
 
 	fakeEmail := faker.Internet().Email()
 
