@@ -250,6 +250,37 @@ func (c *Client) ReadContact(email string, properties string) (*ContactOutput, E
 	return &contactOutput, ErrorResponse{}
 }
 
+// DeleteContact deletes a Contact in HubSpot
+func (c *Client) DeleteContact(contactID string) (bool, ErrorResponse) {
+
+	apiURL := fmt.Sprintf("%s/crm/%s/objects/contacts/%s?hapikey=%s", c.APIBaseURL, c.APIVersion, contactID, c.APIKey)
+	r, err := c.request(apiURL, http.MethodDelete, nil)
+
+	if err != nil {
+		return false,
+			ErrorResponse{
+				StatusCode: r.StatusCode,
+				Status:     "error",
+				Message:    fmt.Sprintf("unable to execute request, err: %v", err),
+			}
+	}
+
+	// StatusNoContent means that hubspot succeeded, though it will succeed for any numeric value, an alphanumeric will create a 404 response
+	if r.StatusCode != http.StatusNoContent {
+		var errorResponse ErrorResponse
+		err := json.Unmarshal(r.Body, &errorResponse)
+		errorResponse.StatusCode = r.StatusCode
+		if err != nil {
+			errorResponse.Status = "error"
+			errorResponse.Message = fmt.Sprintf("unable to unmarshal HubSpot delete account error response, err: %v", err)
+		}
+
+		return false, errorResponse
+	}
+
+	return true, ErrorResponse{}
+}
+
 // request executes a HTTP request and returns the response
 func (c *Client) request(
 	url string,
@@ -279,6 +310,12 @@ func (c *Client) request(
 
 	// prepare response
 	response.StatusCode = r.StatusCode
+
+	// a delete response returns StatusNoContent, for example, so end after finding this
+	if response.StatusCode == http.StatusNoContent {
+		return &response, nil
+	}
+
 	if err := json.NewDecoder(r.Body).Decode(&response.Body); err != nil {
 		return &response, errors.New("ERROR: could not decode response")
 	}

@@ -10,6 +10,7 @@ type HubSpotClient interface {
 	CreateContact(contactInput *hubspot.ContactInput) (*hubspot.ContactOutput, hubspot.ErrorResponse)
 	UpdateContact(contactID string, contactInput *hubspot.ContactInput) (*hubspot.ContactOutput, hubspot.ErrorResponse)
 	ReadContact(email string, properties string) (*hubspot.ContactOutput, hubspot.ErrorResponse)
+	DeleteContact(contactID string) (bool, hubspot.ErrorResponse)
 }
 
 // make sure hubspot.Client type satisfies the HubSpotClient interface

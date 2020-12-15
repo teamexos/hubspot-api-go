@@ -463,3 +463,43 @@ func TestReadContact(t *testing.T) {
 	}
 
 }
+
+func TestDeleteContact(t *testing.T) {
+	c := hubSpot.NewClient("fake-api-key")
+
+	tests := []struct {
+		name           string
+		wantID         string
+		wantStatusCode int
+	}{
+		{
+			name:           "delete contact success",
+			wantID:         "3100",
+			wantStatusCode: http.StatusNoContent,
+		},
+		{
+			name:           "object id not found",
+			wantID:         "ABC124",
+			wantStatusCode: http.StatusNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			c.HTTPClient = NewMockHTTPClient(tt.wantStatusCode, "")
+
+			is_deleted, hserr := c.DeleteContact(tt.wantID)
+
+			if hserr.Status != "" {
+				assert.Equal(t, http.StatusNotFound, hserr.StatusCode)
+				assert.Equal(t, false, is_deleted, "ensure the function did not delete ")
+
+			} else {
+				assert.Equal(t, true, is_deleted, "ensure the function deleted ")
+			}
+
+		})
+	}
+
+}
