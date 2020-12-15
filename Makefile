@@ -13,7 +13,7 @@ init:
 
 .PHONY: secrets-scan
 secrets-scan:
-	detect-secrets-hook --baseline ${DETECT_SECRETS_BASELINE} `git diff --cached --name-only)`
+	detect-secrets-hook --baseline ${DETECT_SECRETS_BASELINE} `git diff --cached --name-only`
 
 .PHONY: secrets-update-baseline
 secrets-update-baseline:

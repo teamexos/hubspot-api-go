@@ -47,6 +47,10 @@ make test
 ### Supported API endpoints
 
   - Create Contact
+  - Update Contact
+  - Read Contact (by email address)
+  - Delete Contact
+  - Associate two objects (usually a contact and company)
 
 ## Usage
 
