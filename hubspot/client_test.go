@@ -489,14 +489,13 @@ func TestDeleteContact(t *testing.T) {
 
 			c.HTTPClient = NewMockHTTPClient(tt.wantStatusCode, "")
 
-			is_deleted, hserr := c.DeleteContact(tt.wantID)
+			hserr := c.DeleteContact(tt.wantID)
 
-			if hserr.Status != "" {
-				assert.Equal(t, http.StatusNotFound, hserr.StatusCode)
-				assert.Equal(t, false, is_deleted, "ensure the function did not delete ")
+			if tt.wantStatusCode == http.StatusNotFound {
+				assert.Equal(t, http.StatusNotFound, hserr.StatusCode, "")
 
 			} else {
-				assert.Equal(t, true, is_deleted, "ensure the function deleted ")
+				assert.Equal(t, "", hserr.Status, "ensure the function deleted ")
 			}
 
 		})

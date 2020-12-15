@@ -251,18 +251,17 @@ func (c *Client) ReadContact(email string, properties string) (*ContactOutput, E
 }
 
 // DeleteContact deletes a Contact in HubSpot
-func (c *Client) DeleteContact(contactID string) (bool, ErrorResponse) {
+func (c *Client) DeleteContact(contactID string) ErrorResponse {
 
 	apiURL := fmt.Sprintf("%s/crm/%s/objects/contacts/%s?hapikey=%s", c.APIBaseURL, c.APIVersion, contactID, c.APIKey)
 	r, err := c.request(apiURL, http.MethodDelete, nil)
 
 	if err != nil {
-		return false,
-			ErrorResponse{
-				StatusCode: r.StatusCode,
-				Status:     "error",
-				Message:    fmt.Sprintf("unable to execute request, err: %v", err),
-			}
+		return ErrorResponse{
+			StatusCode: r.StatusCode,
+			Status:     "error",
+			Message:    fmt.Sprintf("unable to execute request, err: %v", err),
+		}
 	}
 
 	// StatusNoContent means that hubspot succeeded, though it will succeed for any numeric value, an alphanumeric will create a 404 response
@@ -275,10 +274,10 @@ func (c *Client) DeleteContact(contactID string) (bool, ErrorResponse) {
 			errorResponse.Message = fmt.Sprintf("unable to unmarshal HubSpot delete account error response, err: %v", err)
 		}
 
-		return false, errorResponse
+		return errorResponse
 	}
 
-	return true, ErrorResponse{}
+	return ErrorResponse{}
 }
 
 // request executes a HTTP request and returns the response
