@@ -5,7 +5,6 @@ TEST_CMD= go test -timeout 30s
 
 .PHONY: init
 init:
-	dep ensure -v
 	npm i
 	pip3 install detect-secrets
 	npx husky add pre-push "make test"
