@@ -9,5 +9,11 @@
   },
   "scripts": {
     "postinstall": "husky install"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "make secrets-scan",
+      "pre-push": "make test"
+    }
   }
 }

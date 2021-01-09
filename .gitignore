@@ -4,6 +4,8 @@ bin
 # golang vendor (dependencies) directory
 vendor
 
+_build
+
 # Node modules (dependencies) directory
 node_modules
 
