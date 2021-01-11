@@ -1,0 +1,38 @@
+name: Go
+
+on: [push]
+
+env:
+  GO111MODULE: on
+
+defaults:
+  run:
+    working-directory: ./go/src/github.com/teamexos/hubspot-api-go
+
+jobs:
+  build:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.15
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+        with:
+          path: go/src/github.com/teamexos/hubspot-api-go
+
+      - name: Load cache
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-go-mod
+        with:
+          path: /home/runner/go/pkg/mod
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('./go/src/github.com/teamexos/hubspot-api-go/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+
+      - name: Test
+        run: make test
